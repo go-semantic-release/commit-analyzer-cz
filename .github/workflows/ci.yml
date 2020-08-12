@@ -53,7 +53,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ghr: true
       - run: |
-          gox -parallel 4 -osarch="linux/amd64 darwin/amd64 linux/arm windows/amd6" -ldflags="-extldflags '-static' -s -w" -output="bin/{{.Dir}}_v${{steps.semrel.outputs.version}}_{{.OS}}_{{.Arch}}" ./cmd/commit-analyzer-cz/
+          gox -parallel 4 -osarch="linux/amd64 darwin/amd64 linux/arm windows/amd64" -ldflags="-extldflags '-static' -s -w" -output="bin/{{.Dir}}_v${{steps.semrel.outputs.version}}_{{.OS}}_{{.Arch}}" ./cmd/commit-analyzer-cz/
         if: steps.semrel.outputs.version != ''
       - run: ghr $(cat .ghr) bin/
         if: steps.semrel.outputs.version != ''
