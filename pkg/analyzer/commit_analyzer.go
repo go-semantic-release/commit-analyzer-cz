@@ -18,7 +18,7 @@ func (da *DefaultCommitAnalyzer) Init(m map[string]string) error {
 }
 
 func (da *DefaultCommitAnalyzer) Name() string {
-	return "commit-analyzer-cz"
+	return "default"
 }
 
 func (da *DefaultCommitAnalyzer) Version() string {
