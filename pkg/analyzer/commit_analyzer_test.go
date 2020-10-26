@@ -71,9 +71,9 @@ func TestDefaultAnalyzer(t *testing.T) {
 			&semrel.Change{Major: true, Minor: false, Patch: false},
 		},
 		{
-			createRawCommit("g", "refactor!: drop support for Node 6\n\nBREAKING CHANGE: refactor to use JavaScript features not available in Node 6."),
+			createRawCommit("g", "refactor(parser)!: drop support for Node 6\n\nBREAKING CHANGE: refactor to use JavaScript features not available in Node 6."),
 			"refactor",
-			"",
+			"parser",
 			&semrel.Change{Major: true, Minor: false, Patch: false},
 		},
 		{
