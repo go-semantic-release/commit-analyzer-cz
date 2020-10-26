@@ -58,6 +58,36 @@ func TestDefaultAnalyzer(t *testing.T) {
 			"",
 			&semrel.Change{Major: true, Minor: false, Patch: false},
 		},
+		{
+			createRawCommit("e", "feat!: modified login endpoint"),
+			"feat",
+			"",
+			&semrel.Change{Major: true, Minor: false, Patch: false},
+		},
+		{
+			createRawCommit("f", "fix!: fixed a typo"),
+			"fix",
+			"",
+			&semrel.Change{Major: true, Minor: false, Patch: false},
+		},
+		{
+			createRawCommit("g", "refactor!: drop support for Node 6\n\nBREAKING CHANGE: refactor to use JavaScript features not available in Node 6."),
+			"refactor",
+			"",
+			&semrel.Change{Major: true, Minor: false, Patch: false},
+		},
+		{
+			createRawCommit("h", "docs: added more documentation"),
+			"docs",
+			"",
+			&semrel.Change{Major: false, Minor: false, Patch: false},
+		},
+		{
+			createRawCommit("i", "chore: moved README.md to root"),
+			"chore",
+			"",
+			&semrel.Change{Major: false, Minor: false, Patch: false},
+		},
 	}
 
 	defaultAnalyzer := &DefaultCommitAnalyzer{}

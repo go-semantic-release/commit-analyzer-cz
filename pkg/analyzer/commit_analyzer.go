@@ -8,7 +8,7 @@ import (
 )
 
 var CAVERSION = "dev"
-var commitPattern = regexp.MustCompile(`^(\w*)(?:\((.*)\))?\: (.*)$`)
+var commitPattern = regexp.MustCompile(`^(\w*)(!)?(?:\((.*)\))?\: (.*)$`)
 var breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
 
 type DefaultCommitAnalyzer struct{}
@@ -34,12 +34,24 @@ func (da *DefaultCommitAnalyzer) analyzeSingleCommit(rawCommit *semrel.RawCommit
 		return c
 	}
 	c.Type = strings.ToLower(found[0][1])
-	c.Scope = found[0][2]
-	c.Message = found[0][3]
+	breakingChange := found[0][2]
+	c.Scope = found[0][3]
+	c.Message = found[0][4]
+
+	isMajorChange := breakingPattern.MatchString(rawCommit.RawMessage)
+	isMinorChange := c.Type == "feat"
+	isPatchChange := c.Type == "fix"
+
+	if len(breakingChange) > 0 {
+		isMajorChange = true
+		isMinorChange = false
+		isPatchChange = false
+	}
+
 	c.Change = &semrel.Change{
-		Major: breakingPattern.MatchString(rawCommit.RawMessage),
-		Minor: c.Type == "feat",
-		Patch: c.Type == "fix",
+		Major: isMajorChange,
+		Minor: isMinorChange,
+		Patch: isPatchChange,
 	}
 	return c
 }
