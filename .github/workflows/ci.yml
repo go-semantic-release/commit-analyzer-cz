@@ -43,7 +43,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ghr: true
       - run: |
-          gox -parallel 4 -osarch="linux/amd64 darwin/amd64 darwin/arm64 linux/arm windows/amd64" -ldflags="-extldflags '-static' -s -w -X github.com/go-semantic-release/commit-analyzer-cz/pkg/analyzer.CAVERSION=${{steps.semrel.outputs.version}}" -output="bin/{{.Dir}}_v${{steps.semrel.outputs.version}}_{{.OS}}_{{.Arch}}" ./cmd/commit-analyzer-cz/
+          gox -parallel 4 -osarch="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 linux/arm windows/amd64" -ldflags="-extldflags '-static' -s -w -X github.com/go-semantic-release/commit-analyzer-cz/pkg/analyzer.CAVERSION=${{steps.semrel.outputs.version}}" -output="bin/{{.Dir}}_v${{steps.semrel.outputs.version}}_{{.OS}}_{{.Arch}}" ./cmd/commit-analyzer-cz/
           cd bin/ && shasum -a 256 * > ./commit-analyzer-cz_v${{steps.semrel.outputs.version}}_checksums.txt && cd -
         if: steps.semrel.outputs.version != ''
         env:
