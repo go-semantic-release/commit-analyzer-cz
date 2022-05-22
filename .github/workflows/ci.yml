@@ -37,21 +37,8 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.18
-      - run: |
-          go install github.com/mitchellh/gox@latest
-          go install github.com/tcnksm/ghr@latest
       - uses: go-semantic-release/action@v1
-        id: semrel
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          ghr: true
-      - run: |
-          gox -parallel 4 -osarch="linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 linux/arm windows/amd64" -ldflags="-extldflags '-static' -s -w -X github.com/go-semantic-release/commit-analyzer-cz/pkg/analyzer.CAVERSION=${{steps.semrel.outputs.version}}" -output="bin/{{.Dir}}_v${{steps.semrel.outputs.version}}_{{.OS}}_{{.Arch}}" ./cmd/commit-analyzer-cz/
-          cd bin/ && shasum -a 256 * > ./commit-analyzer-cz_v${{steps.semrel.outputs.version}}_checksums.txt && cd -
-        if: steps.semrel.outputs.version != ''
-        env:
-          CGO_ENABLED: 0
-      - run: ghr $(cat .ghr) bin/
-        if: steps.semrel.outputs.version != ''
+          hooks: goreleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
