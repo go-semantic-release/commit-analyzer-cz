@@ -7,9 +7,11 @@ import (
 	"github.com/go-semantic-release/semantic-release/v2/pkg/semrel"
 )
 
-var CAVERSION = "dev"
-var commitPattern = regexp.MustCompile(`^(\w*)(?:\((.*)\))?(\!)?\: (.*)$`)
-var breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
+var (
+	CAVERSION       = "dev"
+	commitPattern   = regexp.MustCompile(`^(\w*)(?:\((.*)\))?(\!)?\: (.*)$`)
+	breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
+)
 
 type DefaultCommitAnalyzer struct{}
 
