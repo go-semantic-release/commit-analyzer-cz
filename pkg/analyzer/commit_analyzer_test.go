@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/go-semantic-release/semantic-release/v2/pkg/semrel"
@@ -24,7 +25,20 @@ func createRawCommit(sha, message string) *semrel.RawCommit {
 	return &semrel.RawCommit{
 		SHA:        sha,
 		RawMessage: message,
+		Annotations: map[string]string{
+			"author_name":   "test",
+			"my-annotation": "true",
+		},
 	}
+}
+
+func TestAnnotations(t *testing.T) {
+	defaultAnalyzer := &DefaultCommitAnalyzer{}
+	rawCommit := createRawCommit("a", "feat: new feature")
+	commit := defaultAnalyzer.analyzeSingleCommit(rawCommit)
+	require.Equal(t, rawCommit.SHA, commit.SHA)
+	require.Equal(t, rawCommit.RawMessage, strings.Join(commit.Raw, "\n"))
+	require.Equal(t, rawCommit.Annotations, commit.Annotations)
 }
 
 func TestDefaultAnalyzer(t *testing.T) {

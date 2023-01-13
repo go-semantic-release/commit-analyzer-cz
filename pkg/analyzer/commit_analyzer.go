@@ -28,9 +28,12 @@ func (da *DefaultCommitAnalyzer) Version() string {
 }
 
 func (da *DefaultCommitAnalyzer) analyzeSingleCommit(rawCommit *semrel.RawCommit) *semrel.Commit {
-	c := &semrel.Commit{Change: &semrel.Change{}}
-	c.SHA = rawCommit.SHA
-	c.Raw = strings.Split(rawCommit.RawMessage, "\n")
+	c := &semrel.Commit{
+		SHA:         rawCommit.SHA,
+		Raw:         strings.Split(rawCommit.RawMessage, "\n"),
+		Change:      &semrel.Change{},
+		Annotations: rawCommit.Annotations,
+	}
 	found := commitPattern.FindAllStringSubmatch(c.Raw[0], -1)
 	if len(found) < 1 {
 		return c
