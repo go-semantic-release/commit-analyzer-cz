@@ -8,10 +8,20 @@ import (
 )
 
 var (
-	CAVERSION       = "dev"
-	commitPattern   = regexp.MustCompile(`^(\w*)(?:\((.*)\))?(\!)?\: (.*)$`)
-	breakingPattern = regexp.MustCompile("BREAKING CHANGES?")
+	CAVERSION              = "dev"
+	commitPattern          = regexp.MustCompile(`^(\w*)(?:\((.*)\))?(\!)?\: (.*)$`)
+	breakingPattern        = regexp.MustCompile("BREAKING CHANGES?")
+	mentionedIssuesPattern = regexp.MustCompile(`#(\d+)`)
+	mentionedUsersPattern  = regexp.MustCompile(`(?i)@([a-z\d]([a-z\d]|-[a-z\d])+)`)
 )
+
+func extractMentions(re *regexp.Regexp, s string) string {
+	ret := make([]string, 0)
+	for _, m := range re.FindAllStringSubmatch(s, -1) {
+		ret = append(ret, m[1])
+	}
+	return strings.Join(ret, ",")
+}
 
 type DefaultCommitAnalyzer struct{}
 
@@ -34,6 +44,9 @@ func (da *DefaultCommitAnalyzer) analyzeSingleCommit(rawCommit *semrel.RawCommit
 		Change:      &semrel.Change{},
 		Annotations: rawCommit.Annotations,
 	}
+	c.Annotations["mentioned_issues"] = extractMentions(mentionedIssuesPattern, rawCommit.RawMessage)
+	c.Annotations["mentioned_users"] = extractMentions(mentionedUsersPattern, rawCommit.RawMessage)
+
 	found := commitPattern.FindAllStringSubmatch(c.Raw[0], -1)
 	if len(found) < 1 {
 		return c

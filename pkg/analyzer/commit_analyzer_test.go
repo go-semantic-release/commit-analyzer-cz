@@ -26,19 +26,20 @@ func createRawCommit(sha, message string) *semrel.RawCommit {
 		SHA:        sha,
 		RawMessage: message,
 		Annotations: map[string]string{
-			"author_name":   "test",
-			"my-annotation": "true",
+			"author_name": "test",
 		},
 	}
 }
 
 func TestAnnotations(t *testing.T) {
 	defaultAnalyzer := &DefaultCommitAnalyzer{}
-	rawCommit := createRawCommit("a", "feat: new feature")
+	rawCommit := createRawCommit("a", "fix: bug #123 and #243\nthanks @Test-user for providing this fix\n\nCloses #22")
 	commit := defaultAnalyzer.analyzeSingleCommit(rawCommit)
 	require.Equal(t, rawCommit.SHA, commit.SHA)
 	require.Equal(t, rawCommit.RawMessage, strings.Join(commit.Raw, "\n"))
-	require.Equal(t, rawCommit.Annotations, commit.Annotations)
+	require.Equal(t, "test", commit.Annotations["author_name"])
+	require.Equal(t, "123,243,22", commit.Annotations["mentioned_issues"])
+	require.Equal(t, "Test-user", commit.Annotations["mentioned_users"])
 }
 
 func TestDefaultAnalyzer(t *testing.T) {
