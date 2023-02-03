@@ -39,6 +39,7 @@ jobs:
           go-version: 1.19
       - uses: go-semantic-release/action@v1
         with:
-          hooks: goreleaser
+          hooks: goreleaser,plugin-registry-update
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLUGIN_REGISTRY_ADMIN_ACCESS_TOKEN: ${{ secrets.PLUGIN_REGISTRY_ADMIN_ACCESS_TOKEN }}
