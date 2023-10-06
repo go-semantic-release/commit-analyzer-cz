@@ -25,7 +25,7 @@ func extractMentions(re *regexp.Regexp, s string) string {
 
 type DefaultCommitAnalyzer struct{}
 
-func (da *DefaultCommitAnalyzer) Init(m map[string]string) error {
+func (da *DefaultCommitAnalyzer) Init(_ map[string]string) error {
 	return nil
 }
 
