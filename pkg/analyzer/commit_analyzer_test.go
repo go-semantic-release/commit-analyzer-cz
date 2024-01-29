@@ -98,7 +98,13 @@ func TestDefaultAnalyzer(t *testing.T) {
 			&semrel.Change{Major: false, Minor: false, Patch: false},
 		},
 		{
-			createRawCommit("i", "chore: moved README.md to root"),
+			createRawCommit("i", "chore(deps): bump golang.org/x/crypto from 0.13.0 to 0.17.0"),
+			"chore",
+			"",
+			&semrel.Change{Major: false, Minor: false, Patch: false},
+		},
+		{
+			createRawCommit("j", "chore: moved README.md to root"),
 			"chore",
 			"",
 			&semrel.Change{Major: false, Minor: false, Patch: false},
