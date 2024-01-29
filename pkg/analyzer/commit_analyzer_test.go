@@ -99,7 +99,7 @@ func TestDefaultAnalyzer(t *testing.T) {
 		},
 		{
 			createRawCommit("i", "chore(deps): bump golang.org/x/crypto from 0.13.0 to 0.17.0"),
-			"chore",
+			"chore(deps)",
 			"",
 			&semrel.Change{Major: false, Minor: false, Patch: false},
 		},
