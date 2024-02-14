@@ -112,3 +112,69 @@ func TestDefaultAnalyzer(t *testing.T) {
 		})
 	}
 }
+
+func TestCommitPattern(t *testing.T) {
+	testCases := []struct {
+		rawMessage string
+		wanted     []string
+	}{
+		{
+			rawMessage: "feat: new feature",
+			wanted:     []string{"feat", "", "", "new feature"},
+		},
+		{
+			rawMessage: "feat!: new feature",
+			wanted:     []string{"feat", "", "!", "new feature"},
+		},
+		{
+			rawMessage: "feat(api): new feature",
+			wanted:     []string{"feat", "api", "", "new feature"},
+		},
+		{
+			rawMessage: "feat(api): a(b): c:",
+			wanted:     []string{"feat", "api", "", "a(b): c:"},
+		},
+		{
+			rawMessage: "feat(new cool-api): feature",
+			wanted:     []string{"feat", "new cool-api", "", "feature"},
+		},
+		{
+			rawMessage: "feat(😅): cool",
+			wanted:     []string{"feat", "😅", "", "cool"},
+		},
+		{
+			rawMessage: "this-is-also(valid): cool",
+			wanted:     []string{"this-is-also", "valid", "", "cool"},
+		},
+		{
+			rawMessage: "🚀(🦄): emojis!",
+			wanted:     []string{"🚀", "🦄", "", "emojis!"},
+		},
+		// invalid messages
+		{
+			rawMessage: "feat (new api): feature",
+			wanted:     nil,
+		},
+		{
+			rawMessage: "feat((x)): test",
+			wanted:     nil,
+		},
+		{
+			rawMessage: "feat:test",
+			wanted:     nil,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("CommitPattern: %s", tc.rawMessage), func(t *testing.T) {
+			rawMessageLines := strings.Split(tc.rawMessage, "\n")
+			found := commitPattern.FindAllStringSubmatch(rawMessageLines[0], -1)
+			if len(tc.wanted) == 0 {
+				require.Len(t, found, 0)
+				return
+			}
+			require.Len(t, found, 1)
+			require.Len(t, found[0], 5)
+			require.Equal(t, tc.wanted, found[0][1:])
+		})
+	}
+}

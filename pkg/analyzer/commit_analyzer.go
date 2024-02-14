@@ -9,7 +9,7 @@ import (
 
 var (
 	CAVERSION              = "dev"
-	commitPattern          = regexp.MustCompile(`^(\w*)(?:\((.*)\))?(\!)?\: (.*)$`)
+	commitPattern          = regexp.MustCompile(`^([^\s\(\!]+)(?:\(([^\)]*)\))?(\!)?\: (.*)$`)
 	breakingPattern        = regexp.MustCompile("BREAKING CHANGES?")
 	mentionedIssuesPattern = regexp.MustCompile(`#(\d+)`)
 	mentionedUsersPattern  = regexp.MustCompile(`(?i)@([a-z\d]([a-z\d]|-[a-z\d])+)`)
