@@ -9,18 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func compareCommit(c *semrel.Commit, t, s string, change *semrel.Change) bool {
-	if c.Type != t || c.Scope != s {
-		return false
-	}
-	if c.Change.Major != change.Major ||
-		c.Change.Minor != change.Minor ||
-		c.Change.Patch != change.Patch {
-		return false
-	}
-	return true
-}
-
 func createRawCommit(sha, message string) *semrel.RawCommit {
 	return &semrel.RawCommit{
 		SHA:        sha,
@@ -77,13 +65,13 @@ func TestDefaultAnalyzer(t *testing.T) {
 			createRawCommit("e", "feat!: modified login endpoint"),
 			"feat",
 			"",
-			&semrel.Change{Major: true, Minor: false, Patch: false},
+			&semrel.Change{Major: true, Minor: true, Patch: false},
 		},
 		{
 			createRawCommit("f", "fix!: fixed a typo"),
 			"fix",
 			"",
-			&semrel.Change{Major: true, Minor: false, Patch: false},
+			&semrel.Change{Major: true, Minor: false, Patch: true},
 		},
 		{
 			createRawCommit("g", "refactor(parser)!: drop support for Node 6\n\nBREAKING CHANGE: refactor to use JavaScript features not available in Node 6."),
@@ -103,71 +91,81 @@ func TestDefaultAnalyzer(t *testing.T) {
 			"",
 			&semrel.Change{Major: false, Minor: false, Patch: false},
 		},
+		{
+			createRawCommit("i", "feat(deps): update deps\n\nBREAKING CHANGE: update to new version of dep"),
+			"feat",
+			"deps",
+			&semrel.Change{Major: true, Minor: true, Patch: false},
+		},
 	}
 
 	defaultAnalyzer := &DefaultCommitAnalyzer{}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("AnalyzeCommitMessage: %s", tc.RawCommit.RawMessage), func(t *testing.T) {
-			require.True(t, compareCommit(defaultAnalyzer.analyzeSingleCommit(tc.RawCommit), tc.Type, tc.Scope, tc.Change))
+			analyzedCommit := defaultAnalyzer.analyzeSingleCommit(tc.RawCommit)
+			require.Equal(t, tc.Type, analyzedCommit.Type, "Type")
+			require.Equal(t, tc.Scope, analyzedCommit.Scope, "Scope")
+			require.Equal(t, tc.Change.Major, analyzedCommit.Change.Major, "Major")
+			require.Equal(t, tc.Change.Minor, analyzedCommit.Change.Minor, "Minor")
+			require.Equal(t, tc.Change.Patch, analyzedCommit.Change.Patch, "Patch")
 		})
 	}
 }
 
 func TestCommitPattern(t *testing.T) {
 	testCases := []struct {
-		rawMessage string
-		wanted     []string
+		message string
+		wanted  []string
 	}{
 		{
-			rawMessage: "feat: new feature",
-			wanted:     []string{"feat", "", "", "new feature"},
+			message: "feat: new feature",
+			wanted:  []string{"feat", "", "", "new feature"},
 		},
 		{
-			rawMessage: "feat!: new feature",
-			wanted:     []string{"feat", "", "!", "new feature"},
+			message: "feat!: new feature",
+			wanted:  []string{"feat", "", "!", "new feature"},
 		},
 		{
-			rawMessage: "feat(api): new feature",
-			wanted:     []string{"feat", "api", "", "new feature"},
+			message: "feat(api): new feature",
+			wanted:  []string{"feat", "api", "", "new feature"},
 		},
 		{
-			rawMessage: "feat(api): a(b): c:",
-			wanted:     []string{"feat", "api", "", "a(b): c:"},
+			message: "feat(api): a(b): c:",
+			wanted:  []string{"feat", "api", "", "a(b): c:"},
 		},
 		{
-			rawMessage: "feat(new cool-api): feature",
-			wanted:     []string{"feat", "new cool-api", "", "feature"},
+			message: "feat(new cool-api): feature",
+			wanted:  []string{"feat", "new cool-api", "", "feature"},
 		},
 		{
-			rawMessage: "feat(😅): cool",
-			wanted:     []string{"feat", "😅", "", "cool"},
+			message: "feat(😅): cool",
+			wanted:  []string{"feat", "😅", "", "cool"},
 		},
 		{
-			rawMessage: "this-is-also(valid): cool",
-			wanted:     []string{"this-is-also", "valid", "", "cool"},
+			message: "this-is-also(valid): cool",
+			wanted:  []string{"this-is-also", "valid", "", "cool"},
 		},
 		{
-			rawMessage: "🚀(🦄): emojis!",
-			wanted:     []string{"🚀", "🦄", "", "emojis!"},
+			message: "🚀(🦄): emojis!",
+			wanted:  []string{"🚀", "🦄", "", "emojis!"},
 		},
 		// invalid messages
 		{
-			rawMessage: "feat (new api): feature",
-			wanted:     nil,
+			message: "feat (new api): feature",
+			wanted:  nil,
 		},
 		{
-			rawMessage: "feat((x)): test",
-			wanted:     nil,
+			message: "feat((x)): test",
+			wanted:  nil,
 		},
 		{
-			rawMessage: "feat:test",
-			wanted:     nil,
+			message: "feat:test",
+			wanted:  nil,
 		},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("CommitPattern: %s", tc.rawMessage), func(t *testing.T) {
-			rawMessageLines := strings.Split(tc.rawMessage, "\n")
-			found := commitPattern.FindAllStringSubmatch(rawMessageLines[0], -1)
+		t.Run(fmt.Sprintf("CommitPattern: %s", tc.message), func(t *testing.T) {
+			found := commitPattern.FindAllStringSubmatch(tc.message, -1)
 			if len(tc.wanted) == 0 {
 				require.Len(t, found, 0)
 				return
