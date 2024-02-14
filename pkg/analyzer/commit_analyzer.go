@@ -23,6 +23,29 @@ func extractMentions(re *regexp.Regexp, s string) string {
 	return strings.Join(ret, ",")
 }
 
+func matchesBreakingPattern(c *semrel.Commit) bool {
+	return breakingPattern.MatchString(strings.Join(c.Raw, "\n"))
+}
+
+func setTypeAndChange(c *semrel.Commit) {
+	found := commitPattern.FindAllStringSubmatch(c.Raw[0], -1)
+	if len(found) < 1 {
+		// commit message does not match pattern
+		return
+	}
+
+	c.Type = strings.ToLower(found[0][1])
+	c.Scope = found[0][2]
+	c.Message = found[0][4]
+
+	c.Change = &semrel.Change{
+		// either uses the `!` convention or has a breaking change section
+		Major: found[0][3] == "!" || matchesBreakingPattern(c),
+		Minor: c.Type == "feat",
+		Patch: c.Type == "fix",
+	}
+}
+
 type DefaultCommitAnalyzer struct{}
 
 func (da *DefaultCommitAnalyzer) Init(_ map[string]string) error {
@@ -47,30 +70,7 @@ func (da *DefaultCommitAnalyzer) analyzeSingleCommit(rawCommit *semrel.RawCommit
 	c.Annotations["mentioned_issues"] = extractMentions(mentionedIssuesPattern, rawCommit.RawMessage)
 	c.Annotations["mentioned_users"] = extractMentions(mentionedUsersPattern, rawCommit.RawMessage)
 
-	found := commitPattern.FindAllStringSubmatch(c.Raw[0], -1)
-	if len(found) < 1 {
-		return c
-	}
-	c.Type = strings.ToLower(found[0][1])
-	c.Scope = found[0][2]
-	breakingChange := found[0][3]
-	c.Message = found[0][4]
-
-	isMajorChange := breakingPattern.MatchString(rawCommit.RawMessage)
-	isMinorChange := c.Type == "feat"
-	isPatchChange := c.Type == "fix"
-
-	if len(breakingChange) > 0 {
-		isMajorChange = true
-		isMinorChange = false
-		isPatchChange = false
-	}
-
-	c.Change = &semrel.Change{
-		Major: isMajorChange,
-		Minor: isMinorChange,
-		Patch: isPatchChange,
-	}
+	setTypeAndChange(c)
 	return c
 }
 
