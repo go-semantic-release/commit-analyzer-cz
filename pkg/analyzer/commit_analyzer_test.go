@@ -20,6 +20,7 @@ func createRawCommit(sha, message string) *semrel.RawCommit {
 
 func TestAnnotations(t *testing.T) {
 	defaultAnalyzer := &DefaultCommitAnalyzer{}
+	require.NoError(t, defaultAnalyzer.Init(map[string]string{}))
 	rawCommit := createRawCommit("a", "fix: bug #123 and #243\nthanks @Test-user for providing this fix\n\nCloses #22")
 	commit := defaultAnalyzer.analyzeSingleCommit(rawCommit)
 	require.Equal(t, rawCommit.SHA, commit.SHA)
@@ -64,13 +65,13 @@ func TestDefaultAnalyzer(t *testing.T) {
 			createRawCommit("e", "feat!: modified login endpoint"),
 			"feat",
 			"",
-			&semrel.Change{Major: true, Minor: true, Patch: false},
+			&semrel.Change{Major: true, Minor: false, Patch: false},
 		},
 		{
 			createRawCommit("f", "fix!: fixed a typo"),
 			"fix",
 			"",
-			&semrel.Change{Major: true, Minor: false, Patch: true},
+			&semrel.Change{Major: true, Minor: false, Patch: false},
 		},
 		{
 			createRawCommit("g", "refactor(parser)!: drop support for Node 6\n\nBREAKING CHANGE: refactor to use JavaScript features not available in Node 6."),
@@ -99,6 +100,7 @@ func TestDefaultAnalyzer(t *testing.T) {
 	}
 
 	defaultAnalyzer := &DefaultCommitAnalyzer{}
+	require.NoError(t, defaultAnalyzer.Init(map[string]string{}))
 	for _, tc := range testCases {
 		t.Run(tc.RawCommit.RawMessage, func(t *testing.T) {
 			analyzedCommit := defaultAnalyzer.analyzeSingleCommit(tc.RawCommit)

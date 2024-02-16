@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	defaultMajorReleaseRules = "*(*)!"
+	defaultMajorReleaseRules = "*!"
 	defaultMinorReleaseRules = "feat"
 	defaultPatchReleaseRules = "fix"
 )
