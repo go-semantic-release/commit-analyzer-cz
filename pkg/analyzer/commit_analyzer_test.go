@@ -112,3 +112,94 @@ func TestDefaultAnalyzer(t *testing.T) {
 		})
 	}
 }
+
+func TestReleaseRules(t *testing.T) {
+	type commits []struct {
+		RawCommit *semrel.RawCommit
+		Change    *semrel.Change
+	}
+	testCases := []struct {
+		Config  map[string]string
+		Commits commits
+	}{
+		{
+			Config: map[string]string{
+				"major_release_rules": "feat",
+				"minor_release_rules": "feat",
+				"patch_release_rules": "feat",
+			},
+			Commits: commits{
+				{
+					RawCommit: createRawCommit("a", "feat: new feature"),
+					Change:    &semrel.Change{Major: true, Minor: true, Patch: true},
+				},
+				{
+					RawCommit: createRawCommit("a", "docs: new feature"),
+					Change:    &semrel.Change{Major: false, Minor: false, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "feat!: new feature"),
+					Change:    &semrel.Change{Major: false, Minor: false, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "feat(api): new feature"),
+					Change:    &semrel.Change{Major: true, Minor: true, Patch: true},
+				},
+				{
+					RawCommit: createRawCommit("a", "feat(api)!: new feature"),
+					Change:    &semrel.Change{Major: false, Minor: false, Patch: false},
+				},
+			},
+		},
+		{
+			Config: map[string]string{
+				"major_release_rules": "*!",
+				"minor_release_rules": "feat,chore(deps)",
+				"patch_release_rules": "fix",
+			},
+			Commits: commits{
+				{
+					RawCommit: createRawCommit("a", "feat: new feature"),
+					Change:    &semrel.Change{Major: false, Minor: true, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "docs: new feature"),
+					Change:    &semrel.Change{Major: false, Minor: false, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "docs!: new feature"),
+					Change:    &semrel.Change{Major: true, Minor: false, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "chore(deps): update dependencies"),
+					Change:    &semrel.Change{Major: false, Minor: true, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "chore: cleanup"),
+					Change:    &semrel.Change{Major: false, Minor: false, Patch: false},
+				},
+				{
+					RawCommit: createRawCommit("a", "fix: bug #123"),
+					Change:    &semrel.Change{Major: false, Minor: false, Patch: true},
+				},
+				{
+					RawCommit: createRawCommit("a", "fix!: bug #123"),
+					Change:    &semrel.Change{Major: true, Minor: false, Patch: false},
+				},
+			},
+		},
+	}
+	for _, tc := range testCases {
+		defaultAnalyzer := &DefaultCommitAnalyzer{}
+		require.NoError(t, defaultAnalyzer.Init(tc.Config))
+		for _, commit := range tc.Commits {
+			t.Run(commit.RawCommit.RawMessage, func(t *testing.T) {
+				analyzedCommit := defaultAnalyzer.analyzeSingleCommit(commit.RawCommit)
+				require.Equal(t, commit.Change.Major, analyzedCommit.Change.Major, "Major")
+				require.Equal(t, commit.Change.Minor, analyzedCommit.Change.Minor, "Minor")
+				require.Equal(t, commit.Change.Patch, analyzedCommit.Change.Patch, "Patch")
+			})
+		}
+
+	}
+}
