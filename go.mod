@@ -1,6 +1,6 @@
 module github.com/go-semantic-release/commit-analyzer-cz
 
-go 1.21
+go 1.22
 
 require (
 	github.com/go-semantic-release/semantic-release/v2 v2.28.0

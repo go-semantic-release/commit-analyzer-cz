@@ -1,6 +1,8 @@
 package analyzer
 
 import (
+	"cmp"
+	"fmt"
 	"strings"
 
 	"github.com/go-semantic-release/semantic-release/v2/pkg/semrel"
@@ -8,10 +10,26 @@ import (
 
 var CAVERSION = "dev"
 
-type DefaultCommitAnalyzer struct{}
+type DefaultCommitAnalyzer struct {
+	majorReleaseRules releaseRules
+	minorReleaseRules releaseRules
+	patchReleaseRules releaseRules
+}
 
 func (da *DefaultCommitAnalyzer) Init(m map[string]string) error {
-	// TODO: implement config parsing
+	var err error
+	da.majorReleaseRules, err = parseRules(cmp.Or(m["major_release_rules"], defaultMajorReleaseRules))
+	if err != nil {
+		return fmt.Errorf("failed to parse major release rules: %w", err)
+	}
+	da.minorReleaseRules, err = parseRules(cmp.Or(m["minor_release_rules"], defaultMinorReleaseRules))
+	if err != nil {
+		return fmt.Errorf("failed to parse minor release rules: %w", err)
+	}
+	da.patchReleaseRules, err = parseRules(cmp.Or(m["patch_release_rules"], defaultPatchReleaseRules))
+	if err != nil {
+		return fmt.Errorf("failed to parse patch release rules: %w", err)
+	}
 	return nil
 }
 
@@ -24,21 +42,20 @@ func (da *DefaultCommitAnalyzer) Version() string {
 }
 
 func (da *DefaultCommitAnalyzer) setTypeAndChange(c *semrel.Commit) {
-	found := commitPattern.FindAllStringSubmatch(c.Raw[0], -1)
-	if len(found) < 1 {
-		// commit message does not match pattern
+	pc := parseCommit(c.Raw[0])
+	if pc == nil {
 		return
 	}
 
-	c.Type = strings.ToLower(found[0][1])
-	c.Scope = found[0][2]
-	c.Message = found[0][4]
+	c.Type = pc.Type
+	c.Scope = pc.Scope
+	c.Message = pc.Message
 
 	c.Change = &semrel.Change{
 		// either uses the `!` convention or has a breaking change section
-		Major: found[0][3] == "!" || matchesBreakingPattern(c),
-		Minor: c.Type == "feat",
-		Patch: c.Type == "fix",
+		Major: da.majorReleaseRules.Matches(pc) || matchesBreakingPattern(c),
+		Minor: da.minorReleaseRules.Matches(pc),
+		Patch: da.patchReleaseRules.Matches(pc),
 	}
 }
 
