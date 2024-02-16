@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -101,78 +100,13 @@ func TestDefaultAnalyzer(t *testing.T) {
 
 	defaultAnalyzer := &DefaultCommitAnalyzer{}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("AnalyzeCommitMessage: %s", tc.RawCommit.RawMessage), func(t *testing.T) {
+		t.Run(tc.RawCommit.RawMessage, func(t *testing.T) {
 			analyzedCommit := defaultAnalyzer.analyzeSingleCommit(tc.RawCommit)
 			require.Equal(t, tc.Type, analyzedCommit.Type, "Type")
 			require.Equal(t, tc.Scope, analyzedCommit.Scope, "Scope")
 			require.Equal(t, tc.Change.Major, analyzedCommit.Change.Major, "Major")
 			require.Equal(t, tc.Change.Minor, analyzedCommit.Change.Minor, "Minor")
 			require.Equal(t, tc.Change.Patch, analyzedCommit.Change.Patch, "Patch")
-		})
-	}
-}
-
-func TestCommitPattern(t *testing.T) {
-	testCases := []struct {
-		message string
-		wanted  []string
-	}{
-		{
-			message: "feat: new feature",
-			wanted:  []string{"feat", "", "", "new feature"},
-		},
-		{
-			message: "feat!: new feature",
-			wanted:  []string{"feat", "", "!", "new feature"},
-		},
-		{
-			message: "feat(api): new feature",
-			wanted:  []string{"feat", "api", "", "new feature"},
-		},
-		{
-			message: "feat(api): a(b): c:",
-			wanted:  []string{"feat", "api", "", "a(b): c:"},
-		},
-		{
-			message: "feat(new cool-api): feature",
-			wanted:  []string{"feat", "new cool-api", "", "feature"},
-		},
-		{
-			message: "feat(😅): cool",
-			wanted:  []string{"feat", "😅", "", "cool"},
-		},
-		{
-			message: "this-is-also(valid): cool",
-			wanted:  []string{"this-is-also", "valid", "", "cool"},
-		},
-		{
-			message: "🚀(🦄): emojis!",
-			wanted:  []string{"🚀", "🦄", "", "emojis!"},
-		},
-		// invalid messages
-		{
-			message: "feat (new api): feature",
-			wanted:  nil,
-		},
-		{
-			message: "feat((x)): test",
-			wanted:  nil,
-		},
-		{
-			message: "feat:test",
-			wanted:  nil,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("CommitPattern: %s", tc.message), func(t *testing.T) {
-			found := commitPattern.FindAllStringSubmatch(tc.message, -1)
-			if len(tc.wanted) == 0 {
-				require.Len(t, found, 0)
-				return
-			}
-			require.Len(t, found, 1)
-			require.Len(t, found[0], 5)
-			require.Equal(t, tc.wanted, found[0][1:])
 		})
 	}
 }

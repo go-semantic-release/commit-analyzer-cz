@@ -1,33 +1,29 @@
 package analyzer
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/go-semantic-release/semantic-release/v2/pkg/semrel"
 )
 
-var (
-	CAVERSION              = "dev"
-	commitPattern          = regexp.MustCompile(`^([^\s\(\!]+)(?:\(([^\)]*)\))?(\!)?\: (.*)$`)
-	breakingPattern        = regexp.MustCompile("BREAKING CHANGES?")
-	mentionedIssuesPattern = regexp.MustCompile(`#(\d+)`)
-	mentionedUsersPattern  = regexp.MustCompile(`(?i)@([a-z\d]([a-z\d]|-[a-z\d])+)`)
-)
+var CAVERSION = "dev"
 
-func extractMentions(re *regexp.Regexp, s string) string {
-	ret := make([]string, 0)
-	for _, m := range re.FindAllStringSubmatch(s, -1) {
-		ret = append(ret, m[1])
-	}
-	return strings.Join(ret, ",")
+type DefaultCommitAnalyzer struct{}
+
+func (da *DefaultCommitAnalyzer) Init(m map[string]string) error {
+	// TODO: implement config parsing
+	return nil
 }
 
-func matchesBreakingPattern(c *semrel.Commit) bool {
-	return breakingPattern.MatchString(strings.Join(c.Raw, "\n"))
+func (da *DefaultCommitAnalyzer) Name() string {
+	return "default"
 }
 
-func setTypeAndChange(c *semrel.Commit) {
+func (da *DefaultCommitAnalyzer) Version() string {
+	return CAVERSION
+}
+
+func (da *DefaultCommitAnalyzer) setTypeAndChange(c *semrel.Commit) {
 	found := commitPattern.FindAllStringSubmatch(c.Raw[0], -1)
 	if len(found) < 1 {
 		// commit message does not match pattern
@@ -46,20 +42,6 @@ func setTypeAndChange(c *semrel.Commit) {
 	}
 }
 
-type DefaultCommitAnalyzer struct{}
-
-func (da *DefaultCommitAnalyzer) Init(_ map[string]string) error {
-	return nil
-}
-
-func (da *DefaultCommitAnalyzer) Name() string {
-	return "default"
-}
-
-func (da *DefaultCommitAnalyzer) Version() string {
-	return CAVERSION
-}
-
 func (da *DefaultCommitAnalyzer) analyzeSingleCommit(rawCommit *semrel.RawCommit) *semrel.Commit {
 	c := &semrel.Commit{
 		SHA:         rawCommit.SHA,
@@ -70,7 +52,7 @@ func (da *DefaultCommitAnalyzer) analyzeSingleCommit(rawCommit *semrel.RawCommit
 	c.Annotations["mentioned_issues"] = extractMentions(mentionedIssuesPattern, rawCommit.RawMessage)
 	c.Annotations["mentioned_users"] = extractMentions(mentionedUsersPattern, rawCommit.RawMessage)
 
-	setTypeAndChange(c)
+	da.setTypeAndChange(c)
 	return c
 }
 
