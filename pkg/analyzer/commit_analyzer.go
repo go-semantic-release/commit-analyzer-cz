@@ -52,7 +52,7 @@ func (da *DefaultCommitAnalyzer) setTypeAndChange(c *semrel.Commit) {
 	c.Message = pc.Message
 
 	c.Change = &semrel.Change{
-		// either uses the `!` convention or has a breaking change section
+		// either matches the major release rule or has a breaking change section
 		Major: da.majorReleaseRules.Matches(pc) || matchesBreakingPattern(c),
 		Minor: da.minorReleaseRules.Matches(pc),
 		Patch: da.patchReleaseRules.Matches(pc),
