@@ -38,6 +38,35 @@ A [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) analyze
   Refs #133
   ```
 
+## Customizable Release Rules
+It is possible to customize the release rules by providing options to the analyzer. The following options are available:
+
+| Option                | Default |
+|-----------------------|---------|
+| `major_release_rules` | `*!`    |
+| `minor_release_rules` | `feat`  |
+| `patch_release_rules` | `fix`   |
+
+⚠️ Commits that contain `BREAKING CHANGE(S)` in their body will always result in a major release. This behavior cannot be customized yet.
+
+### Rule Syntax
+A rule may match a specific commit type, scope or both. The following syntax is supported: `<type>(<scope>)<modifier>`
+
+- `<type>`: The commit type, e.g. `feat`, `fix`, `refactor`.
+- `<scope>`: The commit scope, e.g. `lang`, `config`. If left empty, the rule matches all scopes (`*`).
+- `<modifier>`: The modifier, e.g. `!` for breaking changes. If left empty, the rule matches only commits without a modifier.
+- A `*` may be used as a wildcard for a type, scope or modifier.
+
+### Example Rules
+| Commit                             | `feat` (or `feat(*)` | `*!` (or `*(*)!`) | `chore(deps)` | `*🚀` |
+|------------------------------------|----------------------|-------------------|---------------|-------|
+| `feat(ui): add button component`   | ✅                    | ❌                 | ❌             | ❌     |
+| `feat!: drop support for Go 1.17`  | ❌                    | ✅                 | ❌             | ❌     |
+| `chore(deps): update dependencies` | ❌                    | ❌                 | ✅             | ❌     |
+| `refactor: remove unused code`     | ❌                    | ❌                 | ❌             | ❌     |
+| `fix🚀: correct minor typos`       | ❌                    | ❌                 | ❌             | ✅     |
+
+
 ## References
 - [Conventional Commit v1.0.0 - Examples](https://www.conventionalcommits.org/en/v1.0.0/#examples)
 
@@ -45,4 +74,4 @@ A [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) analyze
 
 The [MIT License (MIT)](http://opensource.org/licenses/MIT)
 
-Copyright © 2020 [Christoph Witzko](https://twitter.com/christophwitzko)
+Copyright © 2024 [Christoph Witzko](https://twitter.com/christophwitzko)
